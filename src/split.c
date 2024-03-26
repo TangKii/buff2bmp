@@ -5,7 +5,7 @@ void split_file(char *inputfilename, const char *outputfilename)
     FILE *file = fopen(inputfilename, "rb");
     uint8_t buffer[encode_block_size*8];
     if (!file) {
-        color_printf(_ERROR_, "split: Unable to open file for reading.\n");
+        color_printf(_ERROR_, "split: Unable to open file \"%s\" for reading \n",inputfilename);
         return;
     }
 
@@ -15,7 +15,7 @@ void split_file(char *inputfilename, const char *outputfilename)
         snprintf(output_filename_cnt, sizeof(output_filename_cnt), "%s_%d", outputfilename, i);
         FILE *output_file = fopen(output_filename_cnt, "wb");
         if (!output_file) {
-            color_printf(_ERROR_, "split: Unable to create output file %s\n",output_filename_cnt);
+            color_printf(_ERROR_, "split: Unable to create output file \"%s\"\n",output_filename_cnt);
             fclose(file);
             return;
         }

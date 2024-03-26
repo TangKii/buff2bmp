@@ -8,7 +8,7 @@ uint32_t encode_block_height = 0; // 默认块高度
 uint32_t encode_block_size = 0;
 uint32_t encode_block_cnt = 0;
 long encode_file_size = 0;
-uint32_t radio = 0;
+uint32_t radio = 0, need_swap = 0;
 int verbos_flag = 0;
 
 unsigned char *y_data;
@@ -92,10 +92,36 @@ void mk_temp_dir(const char *dirname)
     }
 }
 
+void get_block_cnt(const char *filename)
+{
+    FILE *file = fopen(filename, "rb");
+    uint8_t buffer[24];
+
+    fseek(file, encode_block_size-2, SEEK_SET);
+    do {
+        size_t bytes_read = fread(buffer, 1, 4, file);
+        fseek(file, encode_block_size-4, SEEK_CUR);
+        encode_block_cnt++;
+    }
+    while(buffer[0] == 0xff && buffer[1] == 0x11 && buffer[2]==0xff && buffer[3] == 0x10);
+
+    if(image_height <= 20){
+        encode_block_height = image_height;
+        image_height = encode_block_height*encode_block_cnt;
+    }
+
+    encode_file_size = encode_block_cnt * encode_block_size;
+    radio = image_width * encode_block_height * 2 /encode_block_size;
+
+    if(verbos_flag) {
+        printf("width %d, height %d, flie size %d, block size %d, block cnt %d\n", image_width, image_height, encode_file_size, encode_block_size, encode_block_cnt); 
+    }
+}
+
 int get_jxs_head(const char *filename)
 {
     FILE *file = fopen(filename, "rb");
-    uint8_t buffer[24], need_swap = 0;
+    uint8_t buffer[24];
 
     size_t bytes_read = fread(buffer, 1, sizeof(buffer), file);  // 从源文件读取数据
     if(buffer[0] == 0xff && buffer[1] == 0x10 && buffer[6]==0xff && buffer[7] == 0x12) {
@@ -118,27 +144,8 @@ int get_jxs_head(const char *filename)
         return -1;
     }
 
-    fseek(file, encode_block_size-2, SEEK_SET);
-    do {
-        size_t bytes_read = fread(buffer, 1, 4, file);
-        fseek(file, encode_block_size-4, SEEK_CUR);
-        encode_block_cnt++;
-    }
-    while(buffer[0] == 0xff && buffer[1] == 0x11 && buffer[2]==0xff && buffer[3] == 0x10);
-
-    if(image_height <= 20){
-        encode_block_height = image_height;
-        image_height = encode_block_height*encode_block_cnt;
-    }
-
-    encode_file_size = encode_block_cnt * encode_block_size;
-    radio = image_width * encode_block_height * 2 /encode_block_size;
-
-    if(verbos_flag) {
-        printf("width %d, height %d, flie size %d, block size %d, block cnt %d\n", image_width, image_height, encode_file_size, encode_block_size, encode_block_cnt); 
-    }
     fclose(file);
-    return need_swap;
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -165,7 +172,9 @@ int main(int argc, char *argv[]) {
 
     strcpy(filename,argv[optind]);
 
-    if(get_jxs_head(filename)) {
+    get_jxs_head(filename);
+
+    if(need_swap) {
         // LE BE swap
         if(verbos_flag)
             fprintf(stdout, "framebuff image data save as LE, need swap to BE\n");
@@ -175,16 +184,19 @@ int main(int argc, char *argv[]) {
     else {
         fprintf(stdout, "no need swap to BE\n");
     }
+
+    get_block_cnt(filename);//LE必须先swap才能计算block cnt
+
     if(encode_block_height){
         if(verbos_flag)
             fprintf(stdout, "framebuff image data enode as %d row,need split and merge\n", encode_block_height);
         char split_output_filename[256];
-        snprintf(split_output_filename, sizeof(split_output_filename), ".\\%s\\%s", dirname, filename+2);
+        snprintf(split_output_filename, sizeof(split_output_filename), ".\\%s\\%s", dirname, filename);
         mk_temp_dir(dirname);
-        split_file(filename+2, split_output_filename);
-        execute_command(".\\jxs_decoder.exe -f 0 -n %d .\\temp\\%s_%%d .\\temp\\%s_%%d.yuv",encode_block_cnt, filename+2, filename+2);
+        split_file(filename, split_output_filename);
+        execute_command(".\\jxs_decoder.exe -f 0 -n %d .\\temp\\%s_%%d .\\temp\\%s_%%d.yuv",encode_block_cnt, filename, filename);
         char merge_output_filename[256];
-        snprintf(merge_output_filename, sizeof(merge_output_filename), "%s.yuv", filename+2);
+        snprintf(merge_output_filename, sizeof(merge_output_filename), "%s.yuv", filename);
         merge_file(split_output_filename, merge_output_filename);
         
     }
