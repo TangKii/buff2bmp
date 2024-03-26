@@ -15,6 +15,16 @@ unsigned char *y_data;
 unsigned char *u_data;
 unsigned char *v_data;
 
+// 定义颜色代码
+#define RED     "\033[0;31m"
+#define GREEN   "\033[0;32m"
+#define YELLOW  "\033[0;33m"
+#define BLUE    "\033[0;34m"
+#define MAGENTA "\033[0;35m"
+#define CYAN    "\033[0;36m"
+#define RESET   "\033[0m"
+
+
 void execute_command(const char *format, ...) {
     char command[1024];  // 定义一个足够大的字符数组来保存命令字符串
 
@@ -33,9 +43,9 @@ void execute_command(const char *format, ...) {
 
     // 检查命令执行结果
     if (ret == 0) {
-        printf("\"%s\"---->success\n",command);
+        color_printf(_PASS_, "\"%s\"\n",command);
     } else {
-        printf("\"%s\"----->faile\n",command);
+        color_printf(_ERROR_, "\"%s\"\n",command);
     }
 }
 
@@ -103,7 +113,7 @@ int get_jxs_head(const char *filename)
         need_swap = 1;
     }
     else {
-        printf("frame buff data error, could not get mark ff10\n");
+        color_printf(_ERROR_, "frame buff data error, could not get mark ff10\n");
         fclose(file);
         return -1;
     }
@@ -161,6 +171,9 @@ int main(int argc, char *argv[]) {
             fprintf(stdout, "framebuff image data save as LE, need swap to BE\n");
         execute_command(".\\convertEndian.exe -n 8  %s %s_BE" ,filename, filename);
         strcat(filename,"_BE");
+    }
+    else {
+        fprintf(stdout, "no need swap to BE\n");
     }
     if(encode_block_height){
         if(verbos_flag)

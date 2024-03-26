@@ -10,7 +10,7 @@ void merge_file(char *inputfilename, const char *outputfilename)
     uint8_t * v_data = (unsigned char *)malloc(image_width*image_height / 2);
 
     if (!file) {
-        printf("merge: Unable to open file for writing.\n");
+        color_printf(_ERROR_, "merge: Unable to open file for writing.\n");
         return;
     }
 
@@ -20,7 +20,7 @@ void merge_file(char *inputfilename, const char *outputfilename)
         snprintf(input_filename_cnt, sizeof(input_filename_cnt), "%s_%d.yuv", inputfilename, i);
         FILE *output_file = fopen(input_filename_cnt, "rb");
         if (!output_file) {
-            printf("merge: Unable to open input file.\n");
+            color_printf(_ERROR_, "merge: Unable to open input file.\n");
             fclose(file);
             return;
         }
@@ -38,7 +38,9 @@ void merge_file(char *inputfilename, const char *outputfilename)
 
     // 刷新缓冲区确保数据被写入磁盘
     if (fflush(file) != 0) {
-        printf("merge: fail to fflush output file\n");
+        color_printf(_ERROR_, "merge: fail to fflush output file\n");
     } 
     fclose(file);
+
+    color_printf(_PASS_, "merge: success to merge input file\n");
 }

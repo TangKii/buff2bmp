@@ -8,7 +8,7 @@ project(decode)
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 
 # 添加可执行文件并指定源文件
-add_executable(buff2bmp src/main.c src/split.c src/merge.c)
+add_executable(buff2bmp src/main.c src/split.c src/merge.c src/color_print.c)
 #add_executable(split split.c)
 
 # 添加包含目录
