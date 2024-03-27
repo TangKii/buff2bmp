@@ -151,8 +151,8 @@ int get_jxs_head(const char *filename)
 int main(int argc, char *argv[]) {
     int opt;
     size_t block_size = 0, file_size = 0;// 默认块大小
-    char filename[256] = {0};
-    const char *dirname = "temp";
+    char filename[256] = {0}, filepath[256] = {0};
+    const char *dirname = "..\\temp";
 
     while ((opt = getopt(argc, argv, "v")) != -1) {
         switch (opt) {
@@ -170,22 +170,23 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    strcpy(filename,argv[optind]);
+    strcpy(filepath,argv[optind]);
+    strcpy(filename,strrchr(argv[optind], '\\') + 1);
 
-    get_jxs_head(filename);
+    get_jxs_head(filepath);
 
     if(need_swap) {
         // LE BE swap
         if(verbos_flag)
             fprintf(stdout, "framebuff image data save as LE, need swap to BE\n");
-        execute_command(".\\convertEndian.exe -n 8  %s %s_BE" ,filename, filename);
-        strcat(filename,"_BE");
+        execute_command(".\\convertEndian.exe -n 8  %s %s_BE" ,filepath, filepath);
+        strcat(filepath,"_BE");
     }
     else {
         fprintf(stdout, "no need swap to BE\n");
     }
 
-    get_block_cnt(filename);//LE必须先swap才能计算block cnt
+    get_block_cnt(filepath);//LE必须先swap才能计算block cnt
 
     if(encode_block_height){
         if(verbos_flag)
@@ -193,20 +194,20 @@ int main(int argc, char *argv[]) {
         char split_output_filename[256];
         snprintf(split_output_filename, sizeof(split_output_filename), ".\\%s\\%s", dirname, filename);
         mk_temp_dir(dirname);
-        split_file(filename, split_output_filename);
-        execute_command(".\\jxs_decoder.exe -f 0 -n %d .\\temp\\%s_%%d .\\temp\\%s_%%d.yuv",encode_block_cnt, filename, filename);
+        split_file(filepath, split_output_filename);
+        execute_command(".\\jxs_decoder.exe -f 0 -n %d %s.\\%s_%%d %s.\\%s_%%d.yuv",encode_block_cnt, dirname, filename, dirname, filename);
         char merge_output_filename[256];
-        snprintf(merge_output_filename, sizeof(merge_output_filename), "%s.yuv", filename);
+        snprintf(merge_output_filename, sizeof(merge_output_filename), "%s.yuv", filepath);
         merge_file(split_output_filename, merge_output_filename);
         
     }
     else {
         if(verbos_flag)
             fprintf(stdout, "no need split and merge\n"); 
-        execute_command(".\\jxs_decoder.exe %s %s.yuv",filename, filename);
+        execute_command(".\\jxs_decoder.exe %s %s.yuv",filepath, filepath);
     }
 
-    execute_command(".\\yuv2bmp.exe -w %d -h %d %s.yuv %s.bmp", image_width, image_height, filename, filename);
+    execute_command(".\\yuv2bmp.exe -w %d -h %d %s.yuv %s.bmp", image_width, image_height, filepath, filepath);
 
     return 0;
 }
