@@ -5,6 +5,7 @@
 uint32_t image_width = 0;  // 默认块宽度
 uint32_t image_height = 0;
 uint32_t encode_block_height = 0; // 默认块高度
+uint32_t encode_block_width = 0; // 默认块高度
 uint32_t encode_block_size = 0;
 uint32_t encode_block_cnt = 0;
 long encode_file_size = 0;
@@ -105,16 +106,14 @@ void get_block_cnt(const char *filename)
     }
     while(buffer[0] == 0xff && buffer[1] == 0x11 && buffer[2]==0xff && buffer[3] == 0x10);
 
-    if(image_height <= 20){
-        encode_block_height = image_height;
-        image_height = encode_block_height*encode_block_cnt;
-    }
+    encode_block_height = image_height;
+    image_height = encode_block_height*encode_block_cnt;
 
     encode_file_size = encode_block_cnt * encode_block_size;
-    radio = image_width * encode_block_height * 2 /encode_block_size;
+    radio = encode_block_width * encode_block_height * 2 /encode_block_size;
 
     if(verbos_flag) {
-        printf("width %d, height %d, flie size %d, block size %d, block cnt %d\n", image_width, image_height, encode_file_size, encode_block_size, encode_block_cnt); 
+        printf("width %d, height %d, radio %d, flie size %d, block size %d, block cnt %d\n", image_width, image_height, radio, encode_file_size, encode_block_size, encode_block_cnt); 
     }
 }
 
@@ -126,14 +125,14 @@ int get_jxs_head(const char *filename)
     size_t bytes_read = fread(buffer, 1, sizeof(buffer), file);  // 从源文件读取数据
     if(buffer[0] == 0xff && buffer[1] == 0x10 && buffer[6]==0xff && buffer[7] == 0x12) {
         encode_block_size = (buffer[10] << 24) | (buffer[11] << 16) | (buffer[12] << 8) | buffer[13];
-        image_width = (buffer[18] << 8) | buffer[19];
+        encode_block_width = (buffer[18] << 8) | buffer[19];
         image_height = (buffer[20] << 8) | buffer[21];
 
     }
     else if(buffer[0] == 0x12 && buffer[1] == 0xFF && buffer[6]==0x10 && buffer[7] == 0xff) {
 
         encode_block_size = (buffer[13] << 24) | (buffer[12] << 16) | (buffer[11] << 8) | buffer[10];
-        image_width = (buffer[21] << 8) | buffer[20];
+        encode_block_width = (buffer[21] << 8) | buffer[20];
         image_height = (buffer[19] << 8) | buffer[18];
         // LE need swap
         need_swap = 1;
@@ -144,6 +143,13 @@ int get_jxs_head(const char *filename)
         return -1;
     }
 
+    if(encode_block_width == 768) {
+        image_width = 720;
+    }
+    else if(encode_block_width == 1088)
+    {
+        image_width = 1080;
+    }
     fclose(file);
     return 0;
 }
@@ -188,7 +194,7 @@ int main(int argc, char *argv[]) {
 
     get_block_cnt(filepath);//LE必须先swap才能计算block cnt
 
-    if(encode_block_height){
+    if(encode_block_height < image_height){
         if(verbos_flag)
             fprintf(stdout, "framebuff image data enode as %d row,need split and merge\n", encode_block_height);
         char split_output_filename[256];
@@ -207,7 +213,13 @@ int main(int argc, char *argv[]) {
         execute_command(".\\jxs_decoder.exe %s %s.yuv",filepath, filepath);
     }
 
-    execute_command(".\\yuv2bmp.exe -w %d -h %d %s.yuv %s.bmp", image_width, image_height, filepath, filepath);
+    char cut_input_filename[256], cut_output_filename[256];
+    snprintf(cut_input_filename, sizeof(cut_input_filename), "%s.yuv", filepath);
+    snprintf(cut_output_filename, sizeof(cut_output_filename), "%s_cut.yuv", filepath);
+
+    cut_w_tail(cut_input_filename, encode_block_width, image_height, cut_output_filename, image_width);
+
+    execute_command(".\\yuv2bmp.exe -w %d -h %d %s_cut.yuv %s.bmp", image_width, image_height, filepath, filepath);
 
     return 0;
 }

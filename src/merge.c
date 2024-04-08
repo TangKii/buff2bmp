@@ -5,9 +5,9 @@ void merge_file(char *inputfilename, const char *outputfilename)
     FILE *file = fopen(outputfilename, "wb");
     uint8_t buffer[encode_block_size*8];
 
-    uint8_t *y_data = (unsigned char *)malloc(image_width*image_height);
-    uint8_t * u_data = (unsigned char *)malloc(image_width*image_height / 2);
-    uint8_t * v_data = (unsigned char *)malloc(image_width*image_height / 2);
+    uint8_t *y_data = (unsigned char *)malloc(encode_block_width*image_height);
+    uint8_t * u_data = (unsigned char *)malloc(encode_block_width*image_height / 2);
+    uint8_t * v_data = (unsigned char *)malloc(encode_block_width*image_height / 2);
 
     if (!file) {
         color_printf(_ERROR_, "merge: Unable to open file for writing.\n");
@@ -32,9 +32,9 @@ void merge_file(char *inputfilename, const char *outputfilename)
 
     }
 
-    fwrite(y_data, 1, image_width*image_height, file);  // 将数据写入新的文件
-    fwrite(u_data, 1, image_width*image_height/2, file);  // 将数据写入新的文件
-    fwrite(v_data, 1, image_width*image_height/2, file);  // 将数据写入新的文件
+    fwrite(y_data, 1, encode_block_width*image_height, file);  // 将数据写入新的文件
+    fwrite(u_data, 1, encode_block_width*image_height/2, file);  // 将数据写入新的文件
+    fwrite(v_data, 1, encode_block_width*image_height/2, file);  // 将数据写入新的文件
 
     // 刷新缓冲区确保数据被写入磁盘
     if (fflush(file) != 0) {
@@ -42,5 +42,9 @@ void merge_file(char *inputfilename, const char *outputfilename)
     } 
     fclose(file);
 
+    free(y_data);
+    free(u_data);
+    free(v_data);
+    
     color_printf(_PASS_, "merge: success to merge input file\n");
 }
