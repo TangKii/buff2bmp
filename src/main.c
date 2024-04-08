@@ -145,10 +145,15 @@ int get_jxs_head(const char *filename)
 
     if(encode_block_width == 768) {
         image_width = 720;
+        fprintf(stdout, "framebuff image width is 768, need crop to 720\n");
     }
     else if(encode_block_width == 1088)
     {
         image_width = 1080;
+        fprintf(stdout, "framebuff image width is 1088, need crop to 1080\n");
+    }
+    else {
+        image_width = encode_block_width;
     }
     fclose(file);
     return 0;
