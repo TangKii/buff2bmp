@@ -9,7 +9,8 @@ uint32_t encode_block_width = 0; // 默认块高度
 uint32_t encode_block_size = 0;
 uint32_t encode_block_cnt = 0;
 long encode_file_size = 0;
-uint32_t radio = 0, need_swap = 0;
+float radio = 0;
+uint32_t need_swap = 0;
 int verbos_flag = 0;
 
 unsigned char *y_data;
@@ -100,6 +101,7 @@ void get_block_cnt(const char *filename)
 
     fseek(file, encode_block_size-2, SEEK_SET);
     do {
+        memset(buffer,0,sizeof(buffer));
         size_t bytes_read = fread(buffer, 1, 4, file);
         fseek(file, encode_block_size-4, SEEK_CUR);
         encode_block_cnt++;
@@ -110,10 +112,10 @@ void get_block_cnt(const char *filename)
     image_height = encode_block_height*encode_block_cnt;
 
     encode_file_size = encode_block_cnt * encode_block_size;
-    radio = encode_block_width * encode_block_height * 2 /encode_block_size;
+    radio = (float)encode_block_width * encode_block_height * 2 /encode_block_size;
 
     if(verbos_flag) {
-        printf("width %d, height %d, radio %d, flie size %d, block size %d, block cnt %d\n", image_width, image_height, radio, encode_file_size, encode_block_size, encode_block_cnt); 
+        printf("width %d, height %d, radio %.3f, flie size %d, block size %d, block cnt %d\n", image_width, image_height, radio, encode_file_size, encode_block_size, encode_block_cnt); 
     }
 }
 

@@ -13,7 +13,6 @@ void cut_w_tail(char *inputfilename, uint32_t input_W, uint32_t input_H, const c
     uint8_t * out_u_data = (unsigned char *)malloc(out_W*input_H / 2);
     uint8_t * out_v_data = (unsigned char *)malloc(out_W*input_H / 2);
 
-    printf("%s %s %d %d %d\n",inputfilename, outputfilename, input_W, input_H, out_W);
     if(input_W <= out_W) {
         color_printf(_ERROR_, "cut tail: input file or output width value error!\n");
         goto out;
@@ -49,6 +48,7 @@ void cut_w_tail(char *inputfilename, uint32_t input_W, uint32_t input_H, const c
         color_printf(_ERROR_, "cut tail: fail to fflush output file\n");
     } 
 
+out:
     free(y_data);
     free(u_data);
     free(v_data);
@@ -56,7 +56,6 @@ void cut_w_tail(char *inputfilename, uint32_t input_W, uint32_t input_H, const c
     free(out_u_data);
     free(out_v_data);
 
-out:
     fclose(inputfile);
     fclose(output_file);
 }

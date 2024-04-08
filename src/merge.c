@@ -25,9 +25,9 @@ void merge_file(char *inputfilename, const char *outputfilename)
             return;
         }
 
-        fread(y_data + (encode_block_size * radio/2*i), sizeof(uint8_t), encode_block_size * radio/2, output_file);
-        fread(u_data + (encode_block_size * radio/4*i), sizeof(uint8_t), encode_block_size * radio/4 , output_file);
-        fread(v_data + (encode_block_size * radio/4*i), sizeof(uint8_t), encode_block_size * radio/4, output_file);
+        fread(y_data + (encode_block_width * encode_block_height*i), sizeof(uint8_t), encode_block_width * encode_block_height, output_file);
+        fread(u_data + (encode_block_width * encode_block_height/2*i), sizeof(uint8_t), encode_block_width * encode_block_height / 2 , output_file);
+        fread(v_data + (encode_block_width * encode_block_height/2*i), sizeof(uint8_t), encode_block_width * encode_block_height / 2, output_file);
         fclose(output_file);
 
     }
@@ -45,6 +45,6 @@ void merge_file(char *inputfilename, const char *outputfilename)
     free(y_data);
     free(u_data);
     free(v_data);
-    
+
     color_printf(_PASS_, "merge: success to merge input file\n");
 }
